@@ -1,0 +1,1 @@
+CHANGED,/Users/akutty/Downloads/BluetoothLeGatt 2/Application/build/intermediates/transforms/instantRun/debug/folders/1/5/main/com/example/android/bluetoothlegatt/DeviceScanActivity.class

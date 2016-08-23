@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "/Users/akutty/Downloads/BluetoothLeGatt 2/Application/build/intermediates/res/merged/debug/menu/main.xml",
+        "source": "/Users/akutty/Downloads/BluetoothLeGatt 2/Application/src/main/res/menu/main.xml"
+    },
+    {
+        "merged": "/Users/akutty/Downloads/BluetoothLeGatt 2/Application/build/intermediates/res/merged/debug/menu/gatt_services.xml",
+        "source": "/Users/akutty/Downloads/BluetoothLeGatt 2/Application/src/main/res/menu/gatt_services.xml"
+    }
+]
