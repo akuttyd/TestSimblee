@@ -61,7 +61,7 @@ public class DeviceScanActivity extends ListActivity {
     private BluetoothLeService mBluetoothLeService;
     private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics =
             new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
-    private ArrayList<BluetoothDevice> mLeDevices = new ArrayList<BluetoothDevice>();
+    private ArrayList<PillCapBluetoothAddress> mLeDevices = new ArrayList<PillCapBluetoothAddress>();
 
 
     @Override
@@ -93,8 +93,6 @@ public class DeviceScanActivity extends ListActivity {
             return;
         }
     }
-
-
 
 
     @Override
@@ -224,13 +222,13 @@ public class DeviceScanActivity extends ListActivity {
         }
 
         public void addDevice(BluetoothDevice device) {
-            if (!mLeDevices.contains(device)) {
-                mLeDevices.add(device);
+            if (!mLeDevices.contains(device) && device.getName().contains("PillCap")) {
+                mLeDevices.add(new PillCapBluetoothAddress(device, false));
             }
         }
 
         public BluetoothDevice getDevice(int position) {
-            return mLeDevices.get(position);
+            return mLeDevices.get(position).getBluetoothDevice();
         }
 
         public void clear() {
@@ -266,7 +264,7 @@ public class DeviceScanActivity extends ListActivity {
                 viewHolder = (ViewHolder) view.getTag();
             }
 
-            BluetoothDevice device = mLeDevices.get(i);
+            BluetoothDevice device = mLeDevices.get(i).getBluetoothDevice();
             final String deviceName = device.getName();
             if (deviceName != null && deviceName.length() > 0)
                 viewHolder.deviceName.setText(deviceName);
@@ -329,23 +327,41 @@ public class DeviceScanActivity extends ListActivity {
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
-               // mConnected = true;
+                final String bluetoothAddress = intent.getStringExtra(BluetoothConstants.EXTRA_MAC);
+                updateBluetoothConnectionStatus(bluetoothAddress,true);
+                mLeDeviceListAdapter.notifyDataSetChanged();
+
+                // mConnected = true;
                 //updateConnectionState(R.string.connected);
                 //invalidateOptionsMenu();
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
-               // mConnected = false;
-               // updateConnectionState(R.string.disconnected);
+                final String bluetoothAddress = intent.getStringExtra(BluetoothConstants.EXTRA_MAC);
+                updateBluetoothConnectionStatus(bluetoothAddress,false);
+                mLeDeviceListAdapter.notifyDataSetChanged();
+                // mConnected = false;
+                // updateConnectionState(R.string.disconnected);
                 //invalidateOptionsMenu();
                 //clearUI();
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Show all the supported services and characteristics on the user interface.
                 //displayGattServices(mBluetoothLeService.getSupportedGattServices());
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
-                Log.d("BLE DATA",intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
+                Log.d("BLE DATA", intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
                 //displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
             }
         }
     };
+
+
+    private void updateBluetoothConnectionStatus(String pillCapAddress,boolean status) {
+
+        for (PillCapBluetoothAddress pillCapBluetoothAddress : mLeDevices) {
+            if (pillCapBluetoothAddress.getBluetoothDevice().getAddress().equalsIgnoreCase(pillCapAddress)) {
+                pillCapBluetoothAddress.setConnectionStatus(status);
+                break;
+            }
+        }
+    }
 
     private static IntentFilter makeGattUpdateIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();

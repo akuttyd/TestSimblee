@@ -18,7 +18,6 @@ package com.example.android.bluetoothlegatt;
 
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
@@ -68,12 +67,12 @@ public class BluetoothLeService extends Service {
     public final static UUID UUID_HEART_RATE_MEASUREMENT =
             UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
 
-    private Queue<BluetoothDevice> connectionQueue = new LinkedList<BluetoothDevice>();
+    private Queue<PillCapBluetoothAddress> connectionQueue = new LinkedList<PillCapBluetoothAddress>();
     private Thread connectionThread;
 
 
-    public void initConnection(){
-        if(connectionThread == null){
+    public void initConnection() {
+        if (connectionThread == null) {
             connectionThread = new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -87,15 +86,18 @@ public class BluetoothLeService extends Service {
         }
     }
 
-    private void connectionLoop(){
-        while(!connectionQueue.isEmpty()){
-            connectionQueue.poll().connectGatt(this, false,mGattCallback);
-            try {
-                Thread.sleep(250);
-            } catch (InterruptedException e) {}
+    private void connectionLoop() {
+        while (!connectionQueue.isEmpty()) {
+            PillCapBluetoothAddress device = connectionQueue.poll();
+            if (!device.isConnectionStatus()) {
+                device.getBluetoothDevice().connectGatt(this, false, mGattCallback);
+                try {
+                    Thread.sleep(250);
+                } catch (InterruptedException e) {
+                }
+            }
         }
     }
-
 
 
     // Implements callback methods for GATT events that the app cares about.  For example,
@@ -107,7 +109,7 @@ public class BluetoothLeService extends Service {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 intentAction = ACTION_GATT_CONNECTED;
                 mConnectionState = STATE_CONNECTED;
-                broadcastUpdate(intentAction);
+                broadcastUpdate(intentAction, gatt);
                 Log.i(TAG, "Connected to GATT server.");
                 // Attempts to discover services after successful connection.
                 Log.i(TAG, "Attempting to start service discovery:" +
@@ -117,7 +119,7 @@ public class BluetoothLeService extends Service {
                 intentAction = ACTION_GATT_DISCONNECTED;
                 mConnectionState = STATE_DISCONNECTED;
                 Log.i(TAG, "Disconnected from GATT server.");
-                broadcastUpdate(intentAction);
+                broadcastUpdate(intentAction, gatt);
             }
         }
 
@@ -151,6 +153,12 @@ public class BluetoothLeService extends Service {
         sendBroadcast(intent);
     }
 
+    protected void broadcastUpdate(String action, BluetoothGatt gatt) {
+        final Intent intent = new Intent(action);
+        intent.putExtra(BluetoothConstants.EXTRA_MAC, gatt.getDevice().getAddress());
+        sendBroadcast(intent);
+    }
+
     private void broadcastUpdate(final String action,
                                  final BluetoothGattCharacteristic characteristic) {
         final Intent intent = new Intent(action);
@@ -176,7 +184,7 @@ public class BluetoothLeService extends Service {
             final byte[] data = characteristic.getValue();
             if (data != null && data.length > 0) {
                 final StringBuilder stringBuilder = new StringBuilder(data.length);
-                for(byte byteChar : data)
+                for (byte byteChar : data)
                     stringBuilder.append(String.format("%02X ", byteChar));
                 intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
             }
@@ -233,15 +241,15 @@ public class BluetoothLeService extends Service {
 
     /**
      * Connects to the GATT server hosted on the Bluetooth LE device.
-     *
+     * <p/>
      * //@param address The device address of the destination device.
      *
      * @return Return true if the connection is initiated successfully. The connection result
-     *         is reported asynchronously through the
-     *         {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
-     *         callback.
+     * is reported asynchronously through the
+     * {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
+     * callback.
      */
-    public void connect(List<BluetoothDevice>  bluetoothDevices) {
+    public void connect(List<PillCapBluetoothAddress> bluetoothDevices) {
 
         connectionQueue.addAll(bluetoothDevices);
         initConnection();
@@ -321,7 +329,7 @@ public class BluetoothLeService extends Service {
      * Enables or disables notification on a give characteristic.
      *
      * @param characteristic Characteristic to act on.
-     * @param enabled If true, enable notification.  False otherwise.
+     * @param enabled        If true, enable notification.  False otherwise.
      */
     public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
                                               boolean enabled) {
@@ -359,13 +367,13 @@ public class BluetoothLeService extends Service {
         }
         /*check if the service is available on the device*/
         BluetoothGattService mCustomService = mBluetoothGatt.getService(UUID.fromString("0000fe84-0000-1000-8000-00805f9b34fb"));
-        if(mCustomService == null){
+        if (mCustomService == null) {
             Log.w(TAG, "Custom BLE Service not found");
             return;
         }
         /*get the read characteristic from the service*/
         BluetoothGattCharacteristic mReadCharacteristic = mCustomService.getCharacteristic(UUID.fromString("2d30c082-f39f-4ce6-923f-3484ea480596"));
-        if(mBluetoothGatt.readCharacteristic(mReadCharacteristic) == false){
+        if (mBluetoothGatt.readCharacteristic(mReadCharacteristic) == false) {
             Log.w(TAG, "Failed to read characteristic");
         }
     }
@@ -377,17 +385,17 @@ public class BluetoothLeService extends Service {
         }
         /*check if the service is available on the device*/
         BluetoothGattService mCustomService = mBluetoothGatt.getService(UUID.fromString("0000fe84-0000-1000-8000-00805f9b34fb"));
-        if(mCustomService == null){
+        if (mCustomService == null) {
             Log.w(TAG, "Custom BLE Service not found");
             return;
         }
         /*get the read characteristic from the service*/
         BluetoothGattCharacteristic mWriteCharacteristic = mCustomService.getCharacteristic(UUID.fromString("2d30c083-f39f-4ce6-923f-3484ea480596"));
-       // BluetoothGattCharacteristic mWriteCharacteristic2 = mCustomService.getCharacteristic(UUID.fromString("2d30c084-f39f-4ce6-923f-3484ea480596"));
-       // mWriteCharacteristic.setValue(value, BluetoothGattCharacteristic.FORMAT_UINT32,2);
+        // BluetoothGattCharacteristic mWriteCharacteristic2 = mCustomService.getCharacteristic(UUID.fromString("2d30c084-f39f-4ce6-923f-3484ea480596"));
+        // mWriteCharacteristic.setValue(value, BluetoothGattCharacteristic.FORMAT_UINT32,2);
         mWriteCharacteristic.setValue(value);
         //mWriteCharacteristic2.setValue(value,android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8,21);
-        if(mBluetoothGatt.writeCharacteristic(mWriteCharacteristic) == false){
+        if (mBluetoothGatt.writeCharacteristic(mWriteCharacteristic) == false) {
             Log.w(TAG, "Failed to write characteristic");
         }
 //        if(mBluetoothGatt.writeCharacteristic(mWriteCharacteristic2) == false){
