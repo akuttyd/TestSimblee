@@ -249,9 +249,9 @@ public class BluetoothLeService extends Service {
      * {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
      * callback.
      */
-    public void connect(List<PillCapBluetoothAddress> bluetoothDevices) {
+    public void connect(PillCapBluetoothAddress bluetoothDevice) {
 
-        connectionQueue.addAll(bluetoothDevices);
+        connectionQueue.add(bluetoothDevice);
         initConnection();
 //        if (mBluetoothAdapter == null || address == null) {
 //            Log.w(TAG, "BluetoothAdapter not initialized or unspecified address.");

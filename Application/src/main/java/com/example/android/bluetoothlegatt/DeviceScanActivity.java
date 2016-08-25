@@ -222,7 +222,8 @@ public class DeviceScanActivity extends ListActivity {
         }
 
         public void addDevice(BluetoothDevice device) {
-            if (!mLeDevices.contains(device) && device.getName().contains("PillCap")) {
+            PillCapBluetoothAddress newPillCapAddress = new PillCapBluetoothAddress(device, false);
+            if (!mLeDevices.contains(newPillCapAddress) && newPillCapAddress.getBluetoothDevice().getName().contains("PillCap")) {
                 mLeDevices.add(new PillCapBluetoothAddress(device, false));
             }
         }
