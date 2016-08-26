@@ -144,10 +144,10 @@ public class DeviceScanActivity extends ListActivity {
         scanLeDevice(true);
 
         registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-        if (mBluetoothLeService != null) {
-            mBluetoothLeService.connect(mLeDevices);
-            //Log.d(TAG, "Connect request result=" + result);
-        }
+//        if (mBluetoothLeService != null) {
+//            mBluetoothLeService.connect(mLeDevices);
+//            //Log.d(TAG, "Connect request result=" + result);
+//        }
     }
 
     @Override
@@ -225,6 +225,10 @@ public class DeviceScanActivity extends ListActivity {
             PillCapBluetoothAddress newPillCapAddress = new PillCapBluetoothAddress(device, false);
             if (!mLeDevices.contains(newPillCapAddress) && newPillCapAddress.getBluetoothDevice().getName().contains("PillCap")) {
                 mLeDevices.add(new PillCapBluetoothAddress(device, false));
+                if (mBluetoothLeService != null) {
+                    mBluetoothLeService.connect(newPillCapAddress);
+                    //Log.d(TAG, "Connect request result=" + result);
+                }
             }
         }
 
@@ -308,7 +312,7 @@ public class DeviceScanActivity extends ListActivity {
                 finish();
             }
             // Automatically connects to the device upon successful start-up initialization.
-            mBluetoothLeService.connect(mLeDevices);
+            // mBluetoothLeService.connect(mLeDevices);
         }
 
         @Override
@@ -329,7 +333,7 @@ public class DeviceScanActivity extends ListActivity {
             final String action = intent.getAction();
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
                 final String bluetoothAddress = intent.getStringExtra(BluetoothConstants.EXTRA_MAC);
-                updateBluetoothConnectionStatus(bluetoothAddress,true);
+                updateBluetoothConnectionStatus(bluetoothAddress, true);
                 mLeDeviceListAdapter.notifyDataSetChanged();
 
                 // mConnected = true;
@@ -337,7 +341,7 @@ public class DeviceScanActivity extends ListActivity {
                 //invalidateOptionsMenu();
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
                 final String bluetoothAddress = intent.getStringExtra(BluetoothConstants.EXTRA_MAC);
-                updateBluetoothConnectionStatus(bluetoothAddress,false);
+                updateBluetoothConnectionStatus(bluetoothAddress, false);
                 mLeDeviceListAdapter.notifyDataSetChanged();
                 // mConnected = false;
                 // updateConnectionState(R.string.disconnected);
@@ -354,7 +358,7 @@ public class DeviceScanActivity extends ListActivity {
     };
 
 
-    private void updateBluetoothConnectionStatus(String pillCapAddress,boolean status) {
+    private void updateBluetoothConnectionStatus(String pillCapAddress, boolean status) {
 
         for (PillCapBluetoothAddress pillCapBluetoothAddress : mLeDevices) {
             if (pillCapBluetoothAddress.getBluetoothDevice().getAddress().equalsIgnoreCase(pillCapAddress)) {
