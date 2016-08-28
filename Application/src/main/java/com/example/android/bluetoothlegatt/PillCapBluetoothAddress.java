@@ -30,21 +30,23 @@ public class PillCapBluetoothAddress {
     @Override
     public boolean equals(Object o) {
 
-        // If the object is compared with itself then return true
-        if (o == this) {
-            return true;
-        }
-
-        /* Check if o is an instance of Complex or not
-          "null instanceof [type]" also returns false */
+        if (o == this) return true;
         if (!(o instanceof PillCapBluetoothAddress)) {
             return false;
+           }
+
+      PillCapBluetoothAddress user = (PillCapBluetoothAddress) o;
+
+       return user.getBluetoothDevice().getAddress().equals(bluetoothDevice.getAddress());
+      }
+
+   //Idea from effective Java : Item 9
+   @Override
+    public int hashCode() {
+       int result = 17;
+       result = 31 * result + bluetoothDevice.getAddress().hashCode();
+       return result;
         }
 
-        // typecast o to Complex so that we can compare data members
-        PillCapBluetoothAddress c = (PillCapBluetoothAddress) o;
 
-        // Compare the data members and return accordingly
-        return c.getBluetoothDevice().getAddress().equalsIgnoreCase(bluetoothDevice.getAddress());
-    }
 }

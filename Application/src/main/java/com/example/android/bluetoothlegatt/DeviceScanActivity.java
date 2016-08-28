@@ -32,6 +32,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -223,7 +224,8 @@ public class DeviceScanActivity extends ListActivity {
 
         public void addDevice(BluetoothDevice device) {
             PillCapBluetoothAddress newPillCapAddress = new PillCapBluetoothAddress(device, false);
-            if (!mLeDevices.contains(newPillCapAddress) && newPillCapAddress.getBluetoothDevice().getName().contains("PillCap")) {
+            String deviceName = newPillCapAddress.getBluetoothDevice().getName();
+            if (!mLeDevices.contains(newPillCapAddress)&& !TextUtils.isEmpty(deviceName) && newPillCapAddress.getBluetoothDevice().getName().contains("PillCap")) {
                 mLeDevices.add(new PillCapBluetoothAddress(device, false));
                 if (mBluetoothLeService != null) {
                     mBluetoothLeService.connect(newPillCapAddress);
