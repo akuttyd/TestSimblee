@@ -32,6 +32,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -39,17 +40,20 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * Activity for scanning and displaying available Bluetooth LE devices.
  */
-public class DeviceScanActivity extends ListActivity {
+public class DeviceScanActivity extends AppCompatActivity {
     private LeDeviceListAdapter mLeDeviceListAdapter;
     private BluetoothAdapter mBluetoothAdapter;
     private boolean mScanning;
@@ -63,12 +67,15 @@ public class DeviceScanActivity extends ListActivity {
     private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics =
             new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
     private ArrayList<PillCapBluetoothAddress> mLeDevices = new ArrayList<PillCapBluetoothAddress>();
-
+    private ListView mDevicesList;
+    private int mPosition;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //getActionBar().setTitle(R.string.title_devices);
+        setContentView(R.layout.button_control);
+        mDevicesList = (ListView)findViewById(R.id.list_devices);
         mHandler = new Handler();
 
         // Use this check to determine whether BLE is supported on the device.  Then you can
@@ -93,6 +100,13 @@ public class DeviceScanActivity extends ListActivity {
             finish();
             return;
         }
+
+        mDevicesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+
+            }
+        });
     }
 
 
@@ -141,7 +155,7 @@ public class DeviceScanActivity extends ListActivity {
 
         // Initializes list view adapter.
         mLeDeviceListAdapter = new LeDeviceListAdapter();
-        setListAdapter(mLeDeviceListAdapter);
+        mDevicesList.setAdapter(mLeDeviceListAdapter);
         scanLeDevice(true);
 
         registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
@@ -177,19 +191,7 @@ public class DeviceScanActivity extends ListActivity {
     }
 
 
-    @Override
-    protected void onListItemClick(ListView l, View v, int position, long id) {
-//        final BluetoothDevice device = mLeDeviceListAdapter.getDevice(position);
-//        if (device == null) return;
-//        final Intent intent = new Intent(this, DeviceControlActivity.class);
-//        intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_NAME, device.getName());
-//        intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_ADDRESS, device.getAddress());
-//        if (mScanning) {
-//            mBluetoothAdapter.stopLeScan(mLeScanCallback);
-//            mScanning = false;
-//        }
-//        startActivity(intent);
-    }
+
 
     private void scanLeDevice(final boolean enable) {
         if (enable) {
@@ -377,5 +379,34 @@ public class DeviceScanActivity extends ListActivity {
         intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
         intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
         return intentFilter;
+    }
+
+    public void onClickMedAlert(View v){
+        if(mBluetoothLeService != null) {
+            SimpleDateFormat s = new SimpleDateFormat("ddMMyyyyhhmmss");
+            String format = s.format(new Date());
+            mBluetoothLeService.writeCustomCharacteristic(format+ "-1",mPosition);
+        }
+    }
+    public void onClickTakeMed(View v){
+        if(mBluetoothLeService != null) {
+            SimpleDateFormat s = new SimpleDateFormat("ddMMyyyyhhmmss");
+            String format = s.format(new Date());
+            mBluetoothLeService.writeCustomCharacteristic(format+ "-2",mPosition);
+        }
+    }
+    public void onClickFindMed(View v){
+        if(mBluetoothLeService != null) {
+            SimpleDateFormat s = new SimpleDateFormat("ddMMyyyyhhmmss");
+            String format = s.format(new Date());
+            mBluetoothLeService.writeCustomCharacteristic(format+ "-3",mPosition);
+        }
+    }
+
+    public void onClickRead(View v){
+        if(mBluetoothLeService != null) {
+            mBluetoothLeService.readCustomCharacteristic();
+
+        }
     }
 }

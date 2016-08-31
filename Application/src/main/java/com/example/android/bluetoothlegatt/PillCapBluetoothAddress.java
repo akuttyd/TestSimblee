@@ -1,6 +1,7 @@
 package com.example.android.bluetoothlegatt;
 
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
 
 /**
  * Created by akutty on 24/08/16.
@@ -9,6 +10,16 @@ public class PillCapBluetoothAddress {
 
     private BluetoothDevice bluetoothDevice;
     private boolean connectionStatus;
+
+    public BluetoothGatt getBluetoothGatt() {
+        return bluetoothGatt;
+    }
+
+    public void setBluetoothGatt(BluetoothGatt bluetoothGatt) {
+        this.bluetoothGatt = bluetoothGatt;
+    }
+
+    private BluetoothGatt bluetoothGatt;
 
     public PillCapBluetoothAddress(BluetoothDevice device, boolean status) {
         this.bluetoothDevice = device;

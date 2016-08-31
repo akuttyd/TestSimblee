@@ -31,6 +31,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -67,8 +68,8 @@ public class BluetoothLeService extends Service {
     public final static UUID UUID_HEART_RATE_MEASUREMENT =
             UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
 
-    private Queue<PillCapBluetoothAddress> connectionQueue = new LinkedList<PillCapBluetoothAddress>();
-    private Thread connectionThread;
+    private List<PillCapBluetoothAddress> connectionQueue = new ArrayList<PillCapBluetoothAddress>();
+    private Thread connectionThread, serviceDiscoveryThread;
 
 
     public void initConnection() {
@@ -87,10 +88,40 @@ public class BluetoothLeService extends Service {
     }
 
     private void connectionLoop() {
-        while (!connectionQueue.isEmpty()) {
-            PillCapBluetoothAddress device = connectionQueue.poll();
-            if (!device.isConnectionStatus()) {
-                device.getBluetoothDevice().connectGatt(this, false, mGattCallback);
+        if (connectionQueue != null) {
+            for (int i = 0; i < connectionQueue.size(); i++) {
+                PillCapBluetoothAddress device = connectionQueue.get(i);
+                if (!device.isConnectionStatus()) {
+                    device.setBluetoothGatt(device.getBluetoothDevice().connectGatt(this, false, mGattCallback));
+                    try {
+                        Thread.sleep(250);
+                    } catch (InterruptedException e) {
+                    }
+                }
+            }
+        }
+    }
+
+    private void initServiceDiscovery() {
+        if (serviceDiscoveryThread == null) {
+            serviceDiscoveryThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    serviceDiscovery();
+
+                    serviceDiscoveryThread.interrupt();
+                    serviceDiscoveryThread = null;
+                }
+            });
+
+            serviceDiscoveryThread.start();
+        }
+    }
+
+    private void serviceDiscovery() {
+        if (connectionQueue != null) {
+            for (int i = 0; i < connectionQueue.size(); i++) {
+                connectionQueue.get(i).getBluetoothGatt().discoverServices();
                 try {
                     Thread.sleep(250);
                 } catch (InterruptedException e) {
@@ -126,7 +157,8 @@ public class BluetoothLeService extends Service {
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
+                broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED, gatt);
+
             } else {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
             }
@@ -291,11 +323,20 @@ public class BluetoothLeService extends Service {
      * callback.
      */
     public void disconnect() {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+        if (mBluetoothAdapter == null || connectionQueue.isEmpty()) {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
-        mBluetoothGatt.disconnect();
+        if (connectionQueue != null && connectionQueue.size() > 0) {
+            for (int i = 0; i < connectionQueue.size(); i++) {
+                PillCapBluetoothAddress address = connectionQueue.get(i);
+                if (address.isConnectionStatus() && address.getBluetoothGatt() != null) {
+                    address.getBluetoothGatt().disconnect();
+                    address.setConnectionStatus(false);
+                }
+            }
+        }
+        //mBluetoothGatt.disconnect();
     }
 
     /**
@@ -303,11 +344,21 @@ public class BluetoothLeService extends Service {
      * released properly.
      */
     public void close() {
-        if (mBluetoothGatt == null) {
+        if (mBluetoothAdapter == null || connectionQueue.isEmpty()) {
             return;
         }
-        mBluetoothGatt.close();
-        mBluetoothGatt = null;
+
+        if (connectionQueue != null && connectionQueue.size() > 0) {
+            for (int i = 0; i < connectionQueue.size(); i++) {
+                PillCapBluetoothAddress address = connectionQueue.get(i);
+                if (address.getBluetoothGatt() != null) {
+                    address.getBluetoothGatt().close();
+                    address.setBluetoothGatt(null);
+                }
+            }
+        }
+        // mBluetoothGatt.close();
+        //mBluetoothGatt = null;
     }
 
     /**
@@ -378,13 +429,13 @@ public class BluetoothLeService extends Service {
         }
     }
 
-    public void writeCustomCharacteristic(String value) {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+    public void writeCustomCharacteristic(String value, int position) {
+        if (mBluetoothAdapter == null || connectionQueue == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
         /*check if the service is available on the device*/
-        BluetoothGattService mCustomService = mBluetoothGatt.getService(UUID.fromString("0000fe84-0000-1000-8000-00805f9b34fb"));
+        BluetoothGattService mCustomService = connectionQueue.get(position).getBluetoothGatt().getService(UUID.fromString("0000fe84-0000-1000-8000-00805f9b34fb"));
         if (mCustomService == null) {
             Log.w(TAG, "Custom BLE Service not found");
             return;

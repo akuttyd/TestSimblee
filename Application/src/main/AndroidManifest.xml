@@ -55,9 +55,6 @@
         <service
             android:name=".BluetoothLeService"
             android:enabled="true" />
-        <service
-            android:name=".BleIntentService"
-            android:exported="false"></service>
     </application>
 
 </manifest>
