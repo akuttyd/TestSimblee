@@ -74,8 +74,8 @@ public class DeviceScanActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //getActionBar().setTitle(R.string.title_devices);
-        setContentView(R.layout.button_control);
-        mDevicesList = (ListView)findViewById(R.id.list_devices);
+        setContentView(R.layout.acitivity_device_scan);
+        mDevicesList = (ListView) findViewById(R.id.list_devices);
         mHandler = new Handler();
 
         // Use this check to determine whether BLE is supported on the device.  Then you can
@@ -104,7 +104,7 @@ public class DeviceScanActivity extends AppCompatActivity {
         mDevicesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-
+                mPosition = position;
             }
         });
     }
