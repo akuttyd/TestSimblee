@@ -339,7 +339,7 @@ public class DeviceScanActivity extends AppCompatActivity {
                 final String bluetoothAddress = intent.getStringExtra(BluetoothConstants.EXTRA_MAC);
                 updateBluetoothConnectionStatus(bluetoothAddress, true);
                 mLeDeviceListAdapter.notifyDataSetChanged();
-
+                mBluetoothLeService.initServiceDiscovery();
                 // mConnected = true;
                 //updateConnectionState(R.string.connected);
                 //invalidateOptionsMenu();

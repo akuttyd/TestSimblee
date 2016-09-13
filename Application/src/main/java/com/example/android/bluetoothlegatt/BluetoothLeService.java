@@ -102,7 +102,7 @@ public class BluetoothLeService extends Service {
         }
     }
 
-    private void initServiceDiscovery() {
+    public void initServiceDiscovery() {
         if (serviceDiscoveryThread == null) {
             serviceDiscoveryThread = new Thread(new Runnable() {
                 @Override
