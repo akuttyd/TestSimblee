@@ -416,8 +416,10 @@ public class DeviceScanActivity extends AppCompatActivity {
 
     public void onClickRead(View v){
         if(mBluetoothLeService != null) {
-            mBluetoothLeService.readCustomCharacteristic(mPosition);
-
+            String text = mBluetoothLeService.readCustomCharacteristic(mPosition);
+            if(!TextUtils.isEmpty(text)) {
+                displayData(text);
+            }
         }
     }
 }

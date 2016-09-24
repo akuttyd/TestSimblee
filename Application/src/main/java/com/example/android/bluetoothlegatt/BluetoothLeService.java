@@ -409,10 +409,10 @@ public class BluetoothLeService extends Service {
         return mBluetoothGatt.getServices();
     }
 
-    public void readCustomCharacteristic(int position) {
+    public String readCustomCharacteristic(int position) {
         if (mBluetoothAdapter == null || connectionQueue == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
+            return null;
         }
         /*check if the service is available on the device*/
         BluetoothGatt bluetoothGattRead = connectionQueue.get(position).getBluetoothGatt();
@@ -420,17 +420,18 @@ public class BluetoothLeService extends Service {
         BluetoothGattService mCustomServiceRead = bluetoothGattRead.getService(UUID.fromString("0000fe84-0000-1000-8000-00805f9b34fb"));
         if (mCustomServiceRead == null) {
             Log.w(TAG, "Custom BLE Service not found");
-            return;
+            return null;
         }
         /*get the read characteristic from the service*/
         BluetoothGattCharacteristic mReadCharacteristic = mCustomServiceRead.getCharacteristic(UUID.fromString("2d30c082-f39f-4ce6-923f-3484ea480596"));
 
         String text = mReadCharacteristic.getStringValue(1);
-        Log.d("bledata",text);
+        //Log.d("bledata",text);
 
         if (bluetoothGattRead.readCharacteristic(mReadCharacteristic) == false) {
             Log.w(TAG, "Failed to read characteristic");
         }
+        return text;
     }
 
     public void writeCustomCharacteristic(String value, int position) {
