@@ -316,27 +316,27 @@ public class DeviceControlActivity extends Activity {
         if(mBluetoothLeService != null) {
             SimpleDateFormat s = new SimpleDateFormat("ddMMyyyyhhmmss");
             String format = s.format(new Date());
-            mBluetoothLeService.writeCustomCharacteristic(format+ "-1");
+            mBluetoothLeService.writeCustomCharacteristic(format+ "-1",0);
         }
     }
     public void onClickTakeMed(View v){
         if(mBluetoothLeService != null) {
             SimpleDateFormat s = new SimpleDateFormat("ddMMyyyyhhmmss");
             String format = s.format(new Date());
-            mBluetoothLeService.writeCustomCharacteristic(format+ "-2");
+            mBluetoothLeService.writeCustomCharacteristic(format + "-2",0);
         }
     }
     public void onClickFindMed(View v){
         if(mBluetoothLeService != null) {
             SimpleDateFormat s = new SimpleDateFormat("ddMMyyyyhhmmss");
             String format = s.format(new Date());
-            mBluetoothLeService.writeCustomCharacteristic(format+ "-3");
+            mBluetoothLeService.writeCustomCharacteristic(format+ "-3",0);
         }
     }
 
     public void onClickRead(View v){
         if(mBluetoothLeService != null) {
-                mBluetoothLeService.readCustomCharacteristic();
+                mBluetoothLeService.readCustomCharacteristic(0);
 
         }
     }

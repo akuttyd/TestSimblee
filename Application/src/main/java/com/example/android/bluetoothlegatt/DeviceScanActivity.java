@@ -17,7 +17,6 @@
 package com.example.android.bluetoothlegatt;
 
 import android.app.Activity;
-import android.app.ListActivity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
@@ -62,13 +61,14 @@ public class DeviceScanActivity extends AppCompatActivity {
 
     private static final int REQUEST_ENABLE_BT = 1;
     // Stops scanning after 10 seconds.
-    private static final long SCAN_PERIOD = 10000;
+    private static final long SCAN_PERIOD = 100000;
     private BluetoothLeService mBluetoothLeService;
     private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics =
             new ArrayList<ArrayList<BluetoothGattCharacteristic>>();
     private ArrayList<PillCapBluetoothAddress> mLeDevices = new ArrayList<PillCapBluetoothAddress>();
     private ListView mDevicesList;
     private int mPosition;
+    private TextView mDataField;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -94,6 +94,7 @@ public class DeviceScanActivity extends AppCompatActivity {
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
 
+        mDataField = (TextView) findViewById(R.id.data_value);
         // Checks if Bluetooth is supported on the device.
         if (mBluetoothAdapter == null) {
             Toast.makeText(this, R.string.error_bluetooth_not_supported, Toast.LENGTH_SHORT).show();
@@ -344,9 +345,11 @@ public class DeviceScanActivity extends AppCompatActivity {
                 //updateConnectionState(R.string.connected);
                 //invalidateOptionsMenu();
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
+
                 final String bluetoothAddress = intent.getStringExtra(BluetoothConstants.EXTRA_MAC);
                 updateBluetoothConnectionStatus(bluetoothAddress, false);
                 mLeDeviceListAdapter.notifyDataSetChanged();
+
                 // mConnected = false;
                 // updateConnectionState(R.string.disconnected);
                 //invalidateOptionsMenu();
@@ -354,13 +357,21 @@ public class DeviceScanActivity extends AppCompatActivity {
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Show all the supported services and characteristics on the user interface.
                 //displayGattServices(mBluetoothLeService.getSupportedGattServices());
+                Log.d("SERVICES_DISCOVERED","Im here");
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 Log.d("BLE DATA", intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
-                //displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
+                displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
             }
         }
     };
 
+
+
+    private void displayData(String data) {
+        if (data != null) {
+            mDataField.setText(data);
+        }
+    }
 
     private void updateBluetoothConnectionStatus(String pillCapAddress, boolean status) {
 
@@ -405,7 +416,7 @@ public class DeviceScanActivity extends AppCompatActivity {
 
     public void onClickRead(View v){
         if(mBluetoothLeService != null) {
-            mBluetoothLeService.readCustomCharacteristic();
+            mBluetoothLeService.readCustomCharacteristic(mPosition);
 
         }
     }

@@ -30,11 +30,8 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
-
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 import java.util.UUID;
 
 /**
@@ -70,6 +67,7 @@ public class BluetoothLeService extends Service {
 
     private List<PillCapBluetoothAddress> connectionQueue = new ArrayList<PillCapBluetoothAddress>();
     private Thread connectionThread, serviceDiscoveryThread;
+
 
 
     public void initConnection() {
@@ -411,20 +409,26 @@ public class BluetoothLeService extends Service {
         return mBluetoothGatt.getServices();
     }
 
-    public void readCustomCharacteristic() {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+    public void readCustomCharacteristic(int position) {
+        if (mBluetoothAdapter == null || connectionQueue == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
         /*check if the service is available on the device*/
-        BluetoothGattService mCustomService = mBluetoothGatt.getService(UUID.fromString("0000fe84-0000-1000-8000-00805f9b34fb"));
-        if (mCustomService == null) {
+        BluetoothGatt bluetoothGattRead = connectionQueue.get(position).getBluetoothGatt();
+
+        BluetoothGattService mCustomServiceRead = bluetoothGattRead.getService(UUID.fromString("0000fe84-0000-1000-8000-00805f9b34fb"));
+        if (mCustomServiceRead == null) {
             Log.w(TAG, "Custom BLE Service not found");
             return;
         }
         /*get the read characteristic from the service*/
-        BluetoothGattCharacteristic mReadCharacteristic = mCustomService.getCharacteristic(UUID.fromString("2d30c082-f39f-4ce6-923f-3484ea480596"));
-        if (mBluetoothGatt.readCharacteristic(mReadCharacteristic) == false) {
+        BluetoothGattCharacteristic mReadCharacteristic = mCustomServiceRead.getCharacteristic(UUID.fromString("2d30c082-f39f-4ce6-923f-3484ea480596"));
+
+        String text = mReadCharacteristic.getStringValue(1);
+        Log.d("bledata",text);
+
+        if (bluetoothGattRead.readCharacteristic(mReadCharacteristic) == false) {
             Log.w(TAG, "Failed to read characteristic");
         }
     }
@@ -435,18 +439,20 @@ public class BluetoothLeService extends Service {
             return;
         }
         /*check if the service is available on the device*/
-        BluetoothGattService mCustomService = connectionQueue.get(position).getBluetoothGatt().getService(UUID.fromString("0000fe84-0000-1000-8000-00805f9b34fb"));
-        if (mCustomService == null) {
+        BluetoothGatt bluetoothGattWrite = connectionQueue.get(position).getBluetoothGatt();
+
+        BluetoothGattService mCustomServiceWrite = bluetoothGattWrite.getService(UUID.fromString("0000fe84-0000-1000-8000-00805f9b34fb"));
+        if (mCustomServiceWrite == null) {
             Log.w(TAG, "Custom BLE Service not found");
             return;
         }
         /*get the read characteristic from the service*/
-        BluetoothGattCharacteristic mWriteCharacteristic = mCustomService.getCharacteristic(UUID.fromString("2d30c083-f39f-4ce6-923f-3484ea480596"));
+        BluetoothGattCharacteristic mWriteCharacteristic = mCustomServiceWrite.getCharacteristic(UUID.fromString("2d30c083-f39f-4ce6-923f-3484ea480596"));
         // BluetoothGattCharacteristic mWriteCharacteristic2 = mCustomService.getCharacteristic(UUID.fromString("2d30c084-f39f-4ce6-923f-3484ea480596"));
         // mWriteCharacteristic.setValue(value, BluetoothGattCharacteristic.FORMAT_UINT32,2);
         mWriteCharacteristic.setValue(value);
         //mWriteCharacteristic2.setValue(value,android.bluetooth.BluetoothGattCharacteristic.FORMAT_UINT8,21);
-        if (mBluetoothGatt.writeCharacteristic(mWriteCharacteristic) == false) {
+        if (bluetoothGattWrite.writeCharacteristic(mWriteCharacteristic) == false) {
             Log.w(TAG, "Failed to write characteristic");
         }
 //        if(mBluetoothGatt.writeCharacteristic(mWriteCharacteristic2) == false){
